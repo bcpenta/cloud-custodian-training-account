@@ -1,49 +1,68 @@
 policies:
-  - name: ec2-tag-instances
-    resource: ec2
-    # use cloudtrail event, not ec2-instance-state, when you need to filter on an instance's tags (tags aren't assigned yet when the ec2-instance-state changes to pending and/or running)
-    mode:
-      type: cloudtrail
-      role: arn:aws:iam::842337631775:role/custodian-ec2
-      events:
-        - RunInstances
-    comment: |
-      # Tag all instances with a Custodian tag, so they'll be subject to the auto-termination policy
-    filters:
-      - "KeyName": stephanielingwood
-      - "tag:Custodian": absent
-    actions:
-      - type: tag
-        key: Custodian
-        value: "true"
 
+# tag instances with the PrincipalId
+# TODO: Justin to figure out how to get the userId from the cloudtrail event OR
+# see if IAM will work with ${aws:userid} with ${aws:username}
   - name: ec2-tag-instances-with-owners
     resource: ec2
     # use cloudtrail event, not ec2-instance-state, when you need to filter on an instance's tags (tags aren't assigned yet when the ec2-instance-state changes to pending and/or running)
     mode:
       type: cloudtrail
-      role: arn:aws:iam::842337631775:role/custodian-ec2
+      role: arn:aws:iam::281782457076:role/cloud_custodian_role
       events:
         - RunInstances
     comment: |
-      # Tag all instances with a OwnerContact tag, so they'll be subject to the auto-termination policy
+      # Tag all instances with a PrincipalId tag, so they'll be subject to the auto-termination policy
     actions:
       - type: auto-tag-user
-        tag: OwnerContact
+        tag: PrincipalId
 
+# terminate instances older than 4 hours
   - name: ec2-terminate-old-instances
     resource: ec2
     mode:
       type: periodic
-      role: arn:aws:iam::842337631775:role/custodian-ec2
-      schedule: "rate(1 day)"
+      role: arn:aws:iam::281782457076:role/cloud_custodian_role
+      schedule: "rate(15 minutes)"
     comment: |
-      # Terminate all instances that are tagged Custodian, older than 30 days, and in the default VPC
+      # Terminate all instances that are older than 4 hours
     filters:
-      - "tag:Custodian": present
-      - "KeyName": stephanielingwood
-      - "VpcId": "vpc-559b2731"
       - type: instance-age
-        days: 30
+        op: gte
+        hours: 4
+      - "tag:KeepAlive": absent
     actions:
       - terminate
+
+# delete RDS instances daily
+  - name: RDS-terminate-old-instances
+    resource: rds
+    mode:
+      type: periodic
+      role: arn:aws:iam::281782457076:role/cloud_custodian_role
+      schedule: "rate(45 03 ? * Tue-Sat *)"
+    comment: |
+      # Terminate all instances that are older than 4 hours
+    filters:
+      - "tag:KeepAlive": absent
+    actions:
+      - delete
+        skip-snapshot: true
+
+# TODO: delete snapshots
+
+# TODO: figure out how to filter security groups by KeepAlive tag
+
+# remove security groups
+  # - name: remove-RDS-lab-security-groups
+  #   resource: security-group
+  #   mode:
+  #     type: periodic
+  #     role: arn:aws:iam::281782457076:role/cloud_custodian_role
+  #     schedule: "rate(45 03 ? * Tue-Sat *)"
+  #   comment: |
+  #     # Terminate all instances that are older than 4 hours
+  #   filters:
+  #     - "tag:KeepAlive": absent
+  #   actions:
+  #     - delete
