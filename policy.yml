@@ -8,7 +8,7 @@ policies:
     # use cloudtrail event, not ec2-instance-state, when you need to filter on an instance's tags (tags aren't assigned yet when the ec2-instance-state changes to pending and/or running)
     mode:
       type: cloudtrail
-      role: arn:aws:iam::281782457076:role/cloud_custodian_role
+      role: arn:aws:iam::340132205756:role/cloud_custodian_role
       events:
         - RunInstances
     comment: |
@@ -22,7 +22,7 @@ policies:
     resource: ec2
     mode:
       type: periodic
-      role: arn:aws:iam::281782457076:role/cloud_custodian_role
+      role: arn:aws:iam::340132205756:role/cloud_custodian_role
       schedule: "rate(15 minutes)"
     comment: |
       # Terminate all instances that are older than 4 hours
@@ -39,7 +39,7 @@ policies:
     resource: rds
     mode:
       type: periodic
-      role: arn:aws:iam::281782457076:role/cloud_custodian_role
+      role: arn:aws:iam::340132205756:role/cloud_custodian_role
       schedule: "rate(45 03 ? * Tue-Sat *)"
     comment: |
       # Terminate all instances that are older than 4 hours
@@ -58,7 +58,7 @@ policies:
   #   resource: security-group
   #   mode:
   #     type: periodic
-  #     role: arn:aws:iam::281782457076:role/cloud_custodian_role
+  #     role: arn:aws:iam::340132205756:role/cloud_custodian_role
   #     schedule: "rate(45 03 ? * Tue-Sat *)"
   #   comment: |
   #     # Terminate all instances that are older than 4 hours
